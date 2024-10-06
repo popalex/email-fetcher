@@ -89,8 +89,20 @@ def save_email_to_db(subject, sender, content):
         db = connect_db()
         cursor = db.cursor()
 
-        query = "INSERT INTO emails (subject, sender, content) VALUES (%s, %s, %s)"
-        values = (subject, sender, content)
+        # Create table if it doesn't exist
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS emails (
+            id SERIAL PRIMARY KEY,
+            subject TEXT NOT NULL,
+            sender TEXT NOT NULL,
+            body TEXT NOT NULL,
+            processed BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
+        query = "INSERT INTO emails (subject, sender, body, processed) VALUES (%s, %s, %s, %s)"
+        values = (subject, sender, content, False)
 
         cursor.execute(query, values)
         db.commit()
@@ -118,8 +130,10 @@ def fetch_emails_imap():
         # Search for all unseen (unread) emails
         status, messages = imap.search(None, '(UNSEEN)')
         email_ids = messages[0].split()
+        logging.info(f"Found {len(email_ids)} new emails")
 
         for email_id in email_ids:
+            logging.info(f"Fetching email-id: {email_id.decode('utf-8')}")
             status, msg_data = imap.fetch(email_id, '(RFC822)')
             raw_email = msg_data[0][1]
             msg = email.message_from_bytes(raw_email)
@@ -140,6 +154,7 @@ def fetch_emails_imap():
                         save_email_to_db(subject, sender, content)
             else:
                 content = msg.get_payload(decode=True).decode('utf-8')
+                logging.info(f"Email from: {msg.get('From')}, Subject: {subject[:50]}..., Content: {content[:100]}...")
                 save_email_to_db(subject, sender, content)
 
         imap.logout()
@@ -155,8 +170,10 @@ def fetch_emails_pop3():
 
         # Get message count
         num_messages = len(pop_conn.list()[1])
+        logging.info(f"Found {num_messages} new emails")
 
         for i in range(num_messages):
+            logging.info(f"Fetching email-id: {i+1}/{num_messages}")
             # Fetch the email message by its index
             raw_email = b'\n'.join(pop_conn.retr(i+1)[1])
             msg = email.message_from_bytes(raw_email)
@@ -177,6 +194,7 @@ def fetch_emails_pop3():
                         save_email_to_db(subject, sender, content)
             else:
                 content = msg.get_payload(decode=True).decode('utf-8')
+                logging.info(f"Email from: {msg.get('From')}, Subject: {subject[:50]}..., Content: {content[:100]}...")
                 save_email_to_db(subject, sender, content)
 
         pop_conn.quit()
