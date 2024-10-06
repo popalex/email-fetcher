@@ -1,0 +1,31 @@
+services:
+  email-fetcher:
+    build:
+      context: .  # Build from the Dockerfile located in the . directory
+    volumes:
+      - ./app:/app  # Mount the /app directory in the container
+    # env_file: 
+    #   - /app/.env  # Load environment variables from .env file
+    environment:
+      DB_HOST: db  # Use the service name as the host
+      DB_USER: user  # Database user
+      DB_PASSWORD: password  # Database password
+      DB_NAME: email_db  # Database name
+      DB_PORT: 5432  # Default PostgreSQL port
+    depends_on:
+      - db  # Ensure that the db service is started before this one
+    restart: unless-stopped  # Restart policy
+
+  db:
+    image: postgres:latest  # Use the official PostgreSQL image
+    environment:
+      POSTGRES_DB: email_db  # Set the database name
+      POSTGRES_USER: user  # Set the database user
+      POSTGRES_PASSWORD: password  # Set the database password
+    ports:
+      - "5432:5432"  # Expose the database on port 5432
+    volumes:
+      - db_data:/var/lib/postgresql/data  # Persist database data
+
+volumes:
+  db_data:  # Named volume for persistent data storage
