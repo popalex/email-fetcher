@@ -6,23 +6,26 @@ import poplib
 import re
 import time
 from email.header import decode_header
+import my_logging_module as sn
 
 import psycopg2
 from dotenv import load_dotenv
 
 # Logging configuration
 # Configure logging to both console and file
-logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-rootLogger = logging.getLogger()
-rootLogger.setLevel(logging.INFO)
+# logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+# rootLogger = logging.getLogger()
+# rootLogger.setLevel(logging.INFO)
 
-# fileHandler = logging.FileHandler("{0}/{1}.log".format(logPath, fileName))
-# fileHandler.setFormatter(logFormatter)
-# rootLogger.addHandler(fileHandler)
+# # fileHandler = logging.FileHandler("{0}/{1}.log".format(logPath, fileName))
+# # fileHandler.setFormatter(logFormatter)
+# # rootLogger.addHandler(fileHandler)
 
-consoleHandler = logging.StreamHandler()
-consoleHandler.setFormatter(logFormatter)
-rootLogger.addHandler(consoleHandler)
+# consoleHandler = logging.StreamHandler()
+# consoleHandler.setFormatter(logFormatter)
+# rootLogger.addHandler(consoleHandler)
+
+logging = sn.sane_logger
 
 # Load environment variables from the .env file
 load_dotenv()
